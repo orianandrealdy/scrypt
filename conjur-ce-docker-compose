@@ -1,0 +1,46 @@
+version: '2'
+services:
+  database:
+    image: postgres:9.3
+    networks:
+      macvlantest:
+          ipv4_address: 10.0.1.205
+
+  conjur:
+    image: cyberark/conjur
+    command: server
+    networks:
+      macvlantest:
+          ipv4_address: 10.0.1.206
+    environment:
+      DATABASE_URL: postgres://postgres@database/postgres
+      CONJUR_DATA_KEY:
+    depends_on: [ database ]
+    ports:
+      - "8080:80"
+
+  client:
+    image: conjurinc/cli5
+    networks:
+      macvlantest:
+          ipv4_address: 10.0.1.207
+    depends_on: [ conjur ]
+    entrypoint: sleep
+    command: infinity
+    environment:
+      CONJUR_APPLIANCE_URL: http://conjur
+      CONJUR_ACCOUNT:
+      CONJUR_AUTHN_API_KEY:
+      CONJUR_AUTHN_LOGIN: admin
+
+networks:
+  macvlantest:
+    driver: macvlan
+    driver_opts:
+      macvlan_mode: bridge
+      parent: ens33
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.1.0/24
+          gateway: 10.0.1.1
