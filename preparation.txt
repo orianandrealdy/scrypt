@@ -1,0 +1,132 @@
+1. Preparation OS Centos
+=======================================================================================
+	- hostname
+	- change static ipaddress
+	- change static DNS IP
+	- internet connection allowed
+		* systemctl disable firewalld
+
+2. set up repository OS
+=======================================================================================
+$ sudo yum update
+$ sudo yum install git
+$ sudo yum install wget
+$ sudo yum install -y yum-utils
+$ sudo yum install -y device-mapper-persistent-data
+$ sudo yum install -y  lvm2
+
+$ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+(docker user CE or EE)
+
+for conjur-ce
+=============
+sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+docker-compose --version
+
+Install ruby
+
+3. Install Docker
+========================================================================================
+$ sudo yum install docker-ce docker-ce-cli containerd.io
+
+4. Post- installation Docker
+========================================================================================
+$ sudo groupadd docker
+$ sudo usermod -aG docker $USER
+
+Config docker to start on boot
+$ sudo systemctl enable docker
+
+chkconfig
+$ sudo chkconfig docker on
+
+====================================================
+Create network bridge container
+====================================================
+docker network create -d macvlan --subnet=10.0.1.0/24 \ 
+--ip-range=10.0.1.192/29 --gateway=10.0.1.1 \
+-o macvlan_mode=bridge -o parent=ens33 macvlantest
+
+
+====================================================
+CONJUR
+====================================================
+1. Certificate
+====================================================	
+	dap-master.cer
+		DNS - dap-master.domain
+		DNS - dap1.domain
+		DNS - dap2.domain
+		DNS - dap3.domain
+	- dap-follower.cer
+		DNS - dap-follower1.domain
+
+
+
+2. Load image docker
+======================================================
+sudo docker load -i <path/files>
+
+check command
+=================
+docker images
+
+
+3. Install DAP 1
+========================================================
+- install DAP1 as container
+- evoke as Master1
+- import cert in DAP1
+
+
+4. install and config DAP2 - standby
+========================================================
+- Create seed from DAP1
+- copy seed to docker host
+- Install  DAP2 as container
+- copy seed to DAP2
+- unpack seed archive
+- evoke DAP2 as standby1
+- import cert in DAP2
+
+
+5. DAP3
+=========================================================
+- Create seed for DAP3
+- copy seed to docker host - DAP3
+- Install DAP3 as container
+- Copy seed to DAP3
+- unpack seed archive
+- evoke DAP3 as standby2
+
+5. Sync data DAP1 to all standby container
+==========================================================
+docker exec dap1 evoke replication sync
+
+
+6. Initialize DAP - init pre setup
+=======================================================
+set up HA proxy
+
+7. Install DAP/conjur CLI
+=========================================================
+
+8. setup cluster policy and auto failover policy
+=========================================================
+upload policy cluster.yml
+evoke all host to auto-failover
+
+
+9. Initiate/enable auto failover policy - scrypt 8
+=========================================================
+after initiate, check cluster status in  DAP UI
+
+
+=================================================================
+Environment success created,, continue to policy management
+=================================================================
+
+
+
